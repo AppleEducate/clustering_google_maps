@@ -52,6 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
       dbGeohashColumn: FakePoint.dbGeohash,
       dbLatColumn: FakePoint.dbLat,
       dbLongColumn: FakePoint.dbLong,
+      onTap: (loc, val) {},
       dbTable: FakePoint.tblFakePoints,
       updateMarkers: updateMarkers,
       aggregationSetup: AggregationSetup(),
@@ -62,6 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
   initMemoryClustering() {
     clusteringHelper = ClusteringHelper.forMemory(
       list: widget.list,
+      onTap: (loc, val) {},
       updateMarkers: updateMarkers,
       aggregationSetup: AggregationSetup(markerSize: 250),
     );
