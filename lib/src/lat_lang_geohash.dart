@@ -13,11 +13,22 @@ class LatLngAndGeohash {
 
   LatLngAndGeohash.fromMap(Map<String, dynamic> map)
       : location = LatLng(
-          double.tryParse(map['lat'].toString()),
-          double.tryParse(map['long'].toString()),
+          _getDouble(map['lat']),
+          _getDouble(map['long']),
         ) {
     this.geohash =
         Geohash.encode(this.location.latitude, this.location.longitude);
+  }
+
+  static double _getDouble(dynamic value) {
+    if (value != null) {
+      try {
+        return double.tryParse(value.toString());
+      } catch (e) {
+        print('Error Parse: $value => $e');
+      }
+    }
+    return 0;
   }
 
   getId() {

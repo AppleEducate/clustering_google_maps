@@ -35,8 +35,8 @@ class SplashBloc {
       final fakeList = await networkFromJson(url);
       for (int i = 0; i < fakeList.length; i++) {
         final point = fakeList[i];
-        final _lat = double.tryParse(point["latitude"]);
-        final _lon = double.tryParse(point["longitude"]);
+        final _lat = double.tryParse(point["latitude"].toString());
+        final _lon = double.tryParse(point["longitude"].toString());
         final f = FakePoint(
           location: LatLng(_lat, _lon),
           id: i,
