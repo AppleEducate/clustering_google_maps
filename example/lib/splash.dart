@@ -28,7 +28,7 @@ class SplashState extends State<Splash> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             RaisedButton(
-              child: Text('Load Fake Data into Database'),
+              child: Text('Load Network Data into Database'),
               onPressed: loading
                   ? null
                   : () async {
@@ -38,6 +38,42 @@ class SplashState extends State<Splash> {
                         });
                         await bloc.addFakePointsToDB(
                             'https://www.tesla.com/all-locations');
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => HomeScreen(),
+                          ),
+                        );
+                        setState(() {
+                          loading = false;
+                        });
+                      } catch (e) {
+                        showDialog(
+                          context: context,
+                          builder: (context) {
+                            return Material(
+                              child: Column(
+                                children: <Widget>[
+                                  Text('Error'),
+                                  Text(e.toString()),
+                                ],
+                              ),
+                            );
+                          },
+                        );
+                      }
+                    },
+            ),
+            RaisedButton(
+              child: Text('Load Fake Data into Database'),
+              onPressed: loading
+                  ? null
+                  : () async {
+                      try {
+                        setState(() {
+                          loading = true;
+                        });
+                        await bloc.assetFromJson(context);
                         await Navigator.push(
                           context,
                           MaterialPageRoute(
