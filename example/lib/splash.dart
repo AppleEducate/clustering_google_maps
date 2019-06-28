@@ -36,7 +36,8 @@ class SplashState extends State<Splash> {
                         setState(() {
                           loading = true;
                         });
-                        await bloc.addFakePointsToDB(context);
+                        await bloc.addFakePointsToDB(
+                            'https://www.tesla.com/all-locations');
                         await Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -50,11 +51,13 @@ class SplashState extends State<Splash> {
                         showDialog(
                           context: context,
                           builder: (context) {
-                            return Column(
-                              children: <Widget>[
-                                Text('Error'),
-                                Text(e.toString()),
-                              ],
+                            return Material(
+                              child: Column(
+                                children: <Widget>[
+                                  Text('Error'),
+                                  Text(e.toString()),
+                                ],
+                              ),
                             );
                           },
                         );
@@ -85,11 +88,13 @@ class SplashState extends State<Splash> {
                         showDialog(
                           context: context,
                           builder: (context) {
-                            return Column(
-                              children: <Widget>[
-                                Text('Error'),
-                                Text(e.toString()),
-                              ],
+                            return Material(
+                              child: Column(
+                                children: <Widget>[
+                                  Text('Error'),
+                                  Text(e.toString()),
+                                ],
+                              ),
                             );
                           },
                         );

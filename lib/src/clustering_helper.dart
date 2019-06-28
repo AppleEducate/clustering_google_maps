@@ -260,23 +260,27 @@ class ClusteringHelper {
       } else {
         listOfPoints = list;
       }
-
-      final Set<Marker> markers = listOfPoints.map((p) {
-        final MarkerId markerId = MarkerId(p.getId());
-        return Marker(
-          markerId: markerId,
-          position: p.location,
-          infoWindow: InfoWindow(
-              title:
-                  "${p.location.latitude.toStringAsFixed(2)},${p.location.longitude.toStringAsFixed(2)}"),
-          icon: bitmapAssetPathForSingleMarker != null
-              ? BitmapDescriptor.fromAsset(bitmapAssetPathForSingleMarker)
-              : BitmapDescriptor.defaultMarker,
-        );
-      }).toSet();
+      final Set<Marker> markers = Set();
+      for (var p in listOfPoints) {
+        try {
+          final MarkerId markerId = MarkerId(p.getId());
+          markers.add(Marker(
+            markerId: markerId,
+            position: p.location,
+            infoWindow: InfoWindow(
+                title:
+                    "${p.location.latitude.toStringAsFixed(2)},${p.location.longitude.toStringAsFixed(2)}"),
+            icon: bitmapAssetPathForSingleMarker != null
+                ? BitmapDescriptor.fromAsset(bitmapAssetPathForSingleMarker)
+                : BitmapDescriptor.defaultMarker,
+          ));
+        } catch (e) {
+          print('Error ${p.getId()} ${p.location} => $e');
+        }
+      }
       updateMarkers(markers);
     } catch (ex) {
-      print(ex.toString());
+      print('Error => $ex');
     }
   }
 

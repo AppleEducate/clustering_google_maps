@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.juanito21.example">
+    package="com.example.example">
 
     <!-- io.flutter.app.FlutterApplication is an android.app.Application that
          calls FlutterMain.startInitialization(this); in its onCreate method.
@@ -29,8 +29,5 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <meta-data android:name="com.google.android.geo.API_KEY"
-            android:value="@string/api_key"/>
-        <uses-library android:name="org.apache.http.legacy" android:required="false" />
     </application>
 </manifest>
