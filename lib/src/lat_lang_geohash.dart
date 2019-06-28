@@ -12,7 +12,10 @@ class LatLngAndGeohash {
   }
 
   LatLngAndGeohash.fromMap(Map<String, dynamic> map)
-      : location = LatLng(map['lat'], map['long']) {
+      : location = LatLng(
+          double.tryParse(map['lat'].toString()),
+          double.tryParse(map['long'].toString()),
+        ) {
     this.geohash =
         Geohash.encode(this.location.latitude, this.location.longitude);
   }

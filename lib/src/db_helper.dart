@@ -72,7 +72,7 @@ class DBHelper {
       print("--------- COMPLETE QUERY");
       return points;
     } catch (e) {
-      print(e.toString());
+      print('Error getting points: $e');
       return List<LatLngAndGeohash>();
     }
   }
