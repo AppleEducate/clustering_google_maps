@@ -20,6 +20,7 @@ class ClusteringHelper {
     @required this.updateMarkers,
     this.database,
     this.whereClause = "",
+    this.onTap,
     @required this.aggregationSetup,
     this.maxZoomForAggregatePoints = 13.5,
     this.bitmapAssetPathForSingleMarker,
@@ -35,6 +36,7 @@ class ClusteringHelper {
     this.maxZoomForAggregatePoints = 13.5,
     @required this.aggregationSetup,
     this.bitmapAssetPathForSingleMarker,
+    this.onTap,
   })  : assert(list != null),
         assert(aggregationSetup != null);
 
