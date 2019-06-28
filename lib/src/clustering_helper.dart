@@ -77,6 +77,8 @@ class ClusteringHelper {
   //Function for update Markers on Google Map
   Function updateMarkers;
 
+  Function(LatLng, String) onTap;
+
   //List of points for memory clustering
   List<LatLngAndGeohash> list;
 
@@ -236,6 +238,7 @@ class ClusteringHelper {
 
       final marker = Marker(
         markerId: markerId,
+        onTap: () => onTap(a.location, a.count.toString()),
         position: a.location,
         infoWindow: InfoWindow(title: a.count.toString()),
         icon: bitmapDescriptor,
@@ -264,12 +267,13 @@ class ClusteringHelper {
       for (var p in listOfPoints) {
         try {
           final MarkerId markerId = MarkerId(p.getId());
+          final _title =
+              "${p.location.latitude.toStringAsFixed(2)},${p.location.longitude.toStringAsFixed(2)}";
           markers.add(Marker(
             markerId: markerId,
             position: p.location,
-            infoWindow: InfoWindow(
-                title:
-                    "${p.location.latitude.toStringAsFixed(2)},${p.location.longitude.toStringAsFixed(2)}"),
+            onTap: () => onTap(p.location, _title),
+            infoWindow: InfoWindow(title: _title),
             icon: bitmapAssetPathForSingleMarker != null
                 ? BitmapDescriptor.fromAsset(bitmapAssetPathForSingleMarker)
                 : BitmapDescriptor.defaultMarker,
