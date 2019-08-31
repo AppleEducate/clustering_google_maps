@@ -43,5 +43,9 @@
 		<false/>
 		<key>io.flutter.embedded_views_preview</key>
 		<true/>
+		<key>NSLocationWhenInUseUsageDescription</key>
+		<string>This app uses Google Maps to show your car location and superchargers.</string>
+		<key>NSLocationAlwaysUsageDescription</key>
+		<string>This app usues your location to know when you are at a supercharger or favorite location.</string>
 	</dict>
 </plist>

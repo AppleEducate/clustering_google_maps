@@ -9,7 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:meta/meta.dart';
-import 'package:sqflite/sqflite.dart';
+import 'package:moor/moor.dart';
 
 class ClusteringHelper {
   ClusteringHelper.forDB({
@@ -18,9 +18,11 @@ class ClusteringHelper {
     @required this.dbLongColumn,
     @required this.dbGeohashColumn,
     @required this.updateMarkers,
+    @required this.dbId,
     this.database,
+    this.markerBuilder,
     this.whereClause = "",
-    this.onTap,
+    this.variables = const [],
     @required this.aggregationSetup,
     this.maxZoomForAggregatePoints = 13.5,
     this.bitmapAssetPathForSingleMarker,
@@ -33,10 +35,11 @@ class ClusteringHelper {
   ClusteringHelper.forMemory({
     @required this.list,
     @required this.updateMarkers,
+    this.variables = const [],
     this.maxZoomForAggregatePoints = 13.5,
     @required this.aggregationSetup,
     this.bitmapAssetPathForSingleMarker,
-    this.onTap,
+    this.markerBuilder,
   })  : assert(list != null),
         assert(aggregationSetup != null);
 
@@ -44,10 +47,12 @@ class ClusteringHelper {
   final double maxZoomForAggregatePoints;
 
   //Database where we performed the queries
-  Database database;
+  GeneratedDatabase database;
 
   //Name of table of the databasa SQLite where are stored the latitude, longitude and geoahash value
   String dbTable;
+
+  String dbId;
 
   //Name of column where is stored the latitude
   String dbLatColumn;
@@ -79,10 +84,11 @@ class ClusteringHelper {
   //Function for update Markers on Google Map
   Function updateMarkers;
 
-  Function(LatLng, String) onTap;
-
   //List of points for memory clustering
   List<LatLngAndGeohash> list;
+  List<Variable> variables;
+
+  Future<Marker> Function(MarkerId, LatLng, BitmapDescriptor) markerBuilder;
 
   //Call during the editing of CameraPosition
   //If you want updateMap during the zoom in/out set forceUpdate to true
@@ -149,7 +155,9 @@ class ClusteringHelper {
             dbLongColumn: dbLongColumn,
             dbGeohashColumn: dbGeohashColumn,
             level: level,
+            dbId: dbId,
             latLngBounds: latLngBounds,
+            variables: variables,
             whereClause: whereClause);
       } else {
         final listBounds = list.where((p) {
@@ -200,13 +208,15 @@ class ClusteringHelper {
     newInputList.removeWhere((p) => p.geohash.substring(0, level) == t);
     double latitude = 0;
     double longitude = 0;
+    String id = '';
     tmp.forEach((l) {
       latitude += l.location.latitude;
       longitude += l.location.longitude;
+      id = l.id;
     });
     final count = tmp.length;
-    final a =
-        AggregatedPoints(LatLng(latitude / count, longitude / count), count);
+    final a = AggregatedPoints(
+        id, LatLng(latitude / count, longitude / count), count);
     resultList.add(a);
     return _retrieveAggregatedPoints(newInputList, resultList, level);
   }
@@ -236,17 +246,23 @@ class ClusteringHelper {
             await getBytesFromCanvas(a.count.toString(), getColor(a.count));
         bitmapDescriptor = BitmapDescriptor.fromBytes(markerIcon);
       }
-      final MarkerId markerId = MarkerId(a.getId());
+      if (a?.id != null) {
+        final MarkerId markerId = MarkerId(a.id);
+        if (markerBuilder != null) {
+          final marker =
+              await markerBuilder(markerId, a?.location, bitmapDescriptor);
+          markers.add(marker);
+        } else {
+          final marker = Marker(
+            markerId: markerId,
+            position: a.location,
+            infoWindow: InfoWindow(title: a.count.toString()),
+            icon: bitmapDescriptor,
+          );
 
-      final marker = Marker(
-        markerId: markerId,
-        onTap: () => onTap(a.location, a.count.toString()),
-        position: a.location,
-        infoWindow: InfoWindow(title: a.count.toString()),
-        icon: bitmapDescriptor,
-      );
-
-      markers.add(marker);
+          markers.add(marker);
+        }
+      }
     }
     updateMarkers(markers);
   }
@@ -259,34 +275,39 @@ class ClusteringHelper {
         listOfPoints = await DBHelper.getPoints(
             database: database,
             dbTable: dbTable,
+            dbId: dbId,
             dbLatColumn: dbLatColumn,
             dbLongColumn: dbLongColumn,
+            variables: variables,
             whereClause: whereClause);
       } else {
         listOfPoints = list;
       }
-      final Set<Marker> markers = Set();
-      for (var p in listOfPoints) {
-        try {
-          final MarkerId markerId = MarkerId(p.getId());
-          final _title =
-              "${p.location.latitude.toStringAsFixed(2)},${p.location.longitude.toStringAsFixed(2)}";
-          markers.add(Marker(
-            markerId: markerId,
-            position: p.location,
-            onTap: () => onTap(p.location, _title),
-            infoWindow: InfoWindow(title: _title),
-            icon: bitmapAssetPathForSingleMarker != null
-                ? BitmapDescriptor.fromAsset(bitmapAssetPathForSingleMarker)
-                : BitmapDescriptor.defaultMarker,
-          ));
-        } catch (e) {
-          print('Error ${p.getId()} ${p.location} => $e');
+
+      final Set<Marker> markers = listOfPoints.map((p) {
+        final MarkerId markerId = MarkerId(p.id);
+        if (markerBuilder != null) {
+          return markerBuilder(
+              markerId,
+              p?.location,
+              bitmapAssetPathForSingleMarker != null
+                  ? BitmapDescriptor.fromAsset(bitmapAssetPathForSingleMarker)
+                  : BitmapDescriptor.defaultMarker);
         }
-      }
+        return Marker(
+          markerId: markerId,
+          position: p.location,
+          infoWindow: InfoWindow(
+              title:
+                  "${p.location.latitude.toStringAsFixed(2)},${p.location.longitude.toStringAsFixed(2)}"),
+          icon: bitmapAssetPathForSingleMarker != null
+              ? BitmapDescriptor.fromAsset(bitmapAssetPathForSingleMarker)
+              : BitmapDescriptor.defaultMarker,
+        );
+      }).toSet();
       updateMarkers(markers);
     } catch (ex) {
-      print('Error => $ex');
+      print(ex.toString());
     }
   }
 

@@ -3,15 +3,17 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 class AggregatedPoints {
   final LatLng location;
   final int count;
+  final String id;
   String bitmabAssetName;
 
-  AggregatedPoints(this.location, this.count) {
+  AggregatedPoints(this.id, this.location, this.count) {
     this.bitmabAssetName = getBitmapDescriptor();
   }
 
-  AggregatedPoints.fromMap(
-      Map<String, dynamic> map, String dbLatColumn, String dbLongColumn)
+  AggregatedPoints.fromMap(Map<String, dynamic> map, String dbLatColumn,
+      String dbLongColumn, String dbIdColumn)
       : count = map['n_marker'],
+        id = map['id'],
         this.location = LatLng(map['lat'], map['long']) {
     this.bitmabAssetName = getBitmapDescriptor();
   }
@@ -41,12 +43,5 @@ class AggregatedPoints {
       bitmapDescriptor = "assets/images/m7.png";
     }
     return bitmapDescriptor;
-  }
-
-  getId() {
-    return location.latitude.toString() +
-        "_" +
-        location.longitude.toString() +
-        "_$count";
   }
 }

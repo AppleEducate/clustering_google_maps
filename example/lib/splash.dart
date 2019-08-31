@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:example/home.dart';
-import 'package:example/splash_bloc.dart';
+import 'services/database.dart';
 import 'package:flutter/material.dart';
-import 'package:clustering_google_maps/clustering_google_maps.dart';
+import 'package:http/http.dart' as http;
+import 'package:tesla/tesla.dart';
 
 class Splash extends StatefulWidget {
   @override
@@ -11,10 +14,8 @@ class Splash extends StatefulWidget {
 }
 
 class SplashState extends State<Splash> {
-  final SplashBloc bloc = SplashBloc();
-
   bool loading = false;
-
+  final db = DatabaseService();
   @override
   void initState() {
     super.initState();
@@ -28,7 +29,7 @@ class SplashState extends State<Splash> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             RaisedButton(
-              child: Text('Load Network Data into Database'),
+              child: Text('Chargers into Database'),
               onPressed: loading
                   ? null
                   : () async {
@@ -36,14 +37,28 @@ class SplashState extends State<Splash> {
                         setState(() {
                           loading = true;
                         });
-                        await bloc.addFakePointsToDB(
-                            'https://www.tesla.com/all-locations');
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => HomeScreen(),
-                          ),
-                        );
+                        try {
+                          List<Supercharger> _chargers = [];
+                          final response = await http
+                              .get('https://www.tesla.com/all-locations');
+                          List<dynamic> _list =
+                              List.from(json.decode(response.body));
+                          for (var item in _list) {
+                            _chargers.add(Supercharger(
+                                null, json.decode(json.encode(item))));
+                          }
+                          await db.locationsDao.updateChargers(_chargers);
+                          // await Navigator.push(
+                          //   context,
+                          //   MaterialPageRoute(
+                          //     builder: (context) => HomeScreen(database: db),
+                          //   ),
+                          // );
+                        } catch (e) {
+                          print('Error => $e');
+                        }
+                        // await bloc.addFakePointsToDB(context);
+
                         setState(() {
                           loading = false;
                         });
@@ -64,79 +79,41 @@ class SplashState extends State<Splash> {
                       }
                     },
             ),
-            RaisedButton(
-              child: Text('Load Fake Data into Database'),
-              onPressed: loading
-                  ? null
-                  : () async {
-                      try {
-                        setState(() {
-                          loading = true;
-                        });
-                        await bloc.assetFromJson(context);
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => HomeScreen(),
-                          ),
-                        );
-                        setState(() {
-                          loading = false;
-                        });
-                      } catch (e) {
-                        showDialog(
-                          context: context,
-                          builder: (context) {
-                            return Material(
-                              child: Column(
-                                children: <Widget>[
-                                  Text('Error'),
-                                  Text(e.toString()),
-                                ],
-                              ),
-                            );
-                          },
-                        );
-                      }
-                    },
-            ),
-            RaisedButton(
-              child: Text('Load Fake Data into Memory'),
-              onPressed: loading
-                  ? null
-                  : () async {
-                      try {
-                        setState(() {
-                          loading = true;
-                        });
-                        final List<LatLngAndGeohash> list =
-                            await bloc.getListOfLatLngAndGeohash(context);
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => HomeScreen(list: list),
-                          ),
-                        );
-                        setState(() {
-                          loading = false;
-                        });
-                      } catch (e) {
-                        showDialog(
-                          context: context,
-                          builder: (context) {
-                            return Material(
-                              child: Column(
-                                children: <Widget>[
-                                  Text('Error'),
-                                  Text(e.toString()),
-                                ],
-                              ),
-                            );
-                          },
-                        );
-                      }
-                    },
-            ),
+            // RaisedButton(
+            //   child: Text('Load Fake Data into Memory'),
+            //   onPressed: loading
+            //       ? null
+            //       : () async {
+            //           try {
+            //             setState(() {
+            //               loading = true;
+            //             });
+            //             final List<LatLngAndGeohash> list =
+            //                 await bloc.getListOfLatLngAndGeohash(context);
+            //             await Navigator.push(
+            //               context,
+            //               MaterialPageRoute(
+            //                 builder: (context) => HomeScreen(list: list),
+            //               ),
+            //             );
+            //             setState(() {
+            //               loading = false;
+            //             });
+            //           } catch (e) {
+            //             showDialog(
+            //               context: context,
+            //               builder: (context) {
+            //                 return Column(
+            //                   children: <Widget>[
+            //                     Text('Error'),
+            //                     Text(e.toString()),
+            //                   ],
+            //                 );
+            //               },
+            //             );
+            //           }
+            //         },
+            // ),
             loading ? CircularProgressIndicator() : Container(),
           ],
         ),
