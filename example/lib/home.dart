@@ -148,7 +148,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onMapCreated: _onMapCreated,
         initialCameraPosition: initialCameraPosition,
         markers: markers,
-        onCameraMove: clusteringHelper.onCameraMove,
+        onCameraMove: (pos) => clusteringHelper.onCameraMove(pos, forceUpdate: false),
         onCameraIdle: clusteringHelper.onMapIdle,
       ),
     );
