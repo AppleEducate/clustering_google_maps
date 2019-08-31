@@ -117,8 +117,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     _type = val;
                   });
                 }
-                clusteringHelper.whereClause =
-                    "WHERE ${TeslaLocations.dbType} LIKE :id";
+
                 switch (val) {
                   case LocationType.all:
                     clusteringHelper.whereClause = '';
@@ -131,6 +130,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     ];
                     break;
                   case LocationType.destination:
+                    clusteringHelper.whereClause =
+                        "WHERE ${TeslaLocations.dbType} LIKE :id";
                     clusteringHelper.variables = [
                       Variable.withString('%destination%')
                     ];
