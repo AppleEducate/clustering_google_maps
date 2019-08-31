@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:clustering_google_maps/clustering_google_maps.dart'
     show ClusteringHelper, AggregationSetup;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
@@ -90,11 +91,57 @@ class _HomeScreenState extends State<HomeScreen> {
         });
   }
 
+  LocationType _type = LocationType.all;
+  bool _superchargersOnly = false;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Clustering Example"),
+        title: Text("Tesla Locations"),
+        bottom: PreferredSize(
+          preferredSize: Size.fromHeight(50),
+          child: Container(
+            child: DropdownButton(
+              items: [
+                for (var item in LocationType.values) ...[
+                  DropdownMenuItem(
+                    value: item,
+                    child: Text(describeEnum(item)),
+                  ),
+                ],
+              ],
+              value: _type,
+              onChanged: (val) {
+                if (mounted) {
+                  setState(() {
+                    _type = val;
+                  });
+                }
+                clusteringHelper.whereClause =
+                    "WHERE ${TeslaLocations.dbType} LIKE :id";
+                switch (val) {
+                  case LocationType.all:
+                    clusteringHelper.whereClause = '';
+                    break;
+                  case LocationType.superchargers:
+                    clusteringHelper.whereClause =
+                        "WHERE ${TeslaLocations.dbType} LIKE :id";
+                    clusteringHelper.variables = [
+                      Variable.withString('%supercharger%')
+                    ];
+                    break;
+                  case LocationType.destination:
+                    clusteringHelper.variables = [
+                      Variable.withString('%destination%')
+                    ];
+                    break;
+                  default:
+                }
+                clusteringHelper.updateMap();
+              },
+            ),
+          ),
+        ),
       ),
       body: GoogleMap(
         onMapCreated: _onMapCreated,
@@ -103,22 +150,8 @@ class _HomeScreenState extends State<HomeScreen> {
         onCameraMove: clusteringHelper.onCameraMove,
         onCameraIdle: clusteringHelper.onMapIdle,
       ),
-      floatingActionButton: FloatingActionButton(
-        child: Icon(Icons.offline_bolt),
-        onPressed: () {
-          final _query = '%supercharger%';
-          if (clusteringHelper.whereClause != null &&
-              clusteringHelper.whereClause.isNotEmpty) {
-            // clusteringHelper.whereClause = '';
-          } else {}
-          clusteringHelper.whereClause =
-              "WHERE ${TeslaLocations.dbType} LIKE :id";
-          clusteringHelper.variables = [
-            Variable.withString(_query),
-          ];
-          clusteringHelper.updateMap();
-        },
-      ),
     );
   }
 }
+
+enum LocationType { all, superchargers, destination }
