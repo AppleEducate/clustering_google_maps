@@ -8,6 +8,7 @@ class TeslaLocations extends Table {
   static final dbLong = "longitude";
   static final dbGeohash = "geohash";
   static final dbType = "type";
+  static final dbOpen = "open_soon";
 
   @override
   Set<Column> get primaryKey => {id};

@@ -30,15 +30,20 @@ class _HomeScreenState extends State<HomeScreen> {
     clusteringHelper.database = db;
     clusteringHelper.updateMap();
     final _chargers = await db.locationsDao.lastLocationsUpdate();
-    if (_chargers == null) {
-      List<Supercharger> _chargers = [];
-      final response = await http.get('https://www.tesla.com/all-locations');
-      List<dynamic> _list = List.from(json.decode(response.body));
-      for (var item in _list) {
-        _chargers.add(Supercharger(null, json.decode(json.encode(item))));
-      }
-      await db.locationsDao.updateChargers(_chargers);
+    if (_chargers == null && _chargers.isEmpty) {
+      _refresh();
     }
+  }
+
+  Future _refresh() async {
+    List<Supercharger> _chargers = [];
+    final response = await http.get('https://www.tesla.com/all-locations');
+    List<dynamic> _list = List.from(json.decode(response.body));
+    for (var item in _list) {
+      _chargers.add(Supercharger(null, json.decode(json.encode(item))));
+    }
+    await db.locationsDao.updateChargers(_chargers);
+    clusteringHelper.updateMap();
   }
 
   updateMarkers(Set<Marker> markers) {
@@ -49,6 +54,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void initState() {
+    _refresh();
     initDatabaseClustering();
     super.initState();
   }
@@ -92,7 +98,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   LocationType _type = LocationType.all;
-  bool _superchargersOnly = false;
+  bool _open = true;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -117,30 +123,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     _type = val;
                   });
                 }
-
-                switch (val) {
-                  case LocationType.all:
-                    clusteringHelper.whereClause = '';
-                    break;
-                  case LocationType.superchargers:
-                    clusteringHelper.whereClause =
-                        "WHERE ${TeslaLocations.dbType} LIKE :id";
-                    clusteringHelper.variables = [
-                      Variable.withString('%supercharger%')
-                    ];
-                    break;
-                  case LocationType.destination:
-                    clusteringHelper.whereClause =
-                        "WHERE ${TeslaLocations.dbType} LIKE :id";
-                    clusteringHelper.variables = [
-                      Variable.withString('%destination%')
-                    ];
-                    break;
-                  default:
-                }
-                clusteringHelper.updateMap();
+                _search();
               },
-            ),
+            )
           ),
         ),
       ),
@@ -148,10 +133,34 @@ class _HomeScreenState extends State<HomeScreen> {
         onMapCreated: _onMapCreated,
         initialCameraPosition: initialCameraPosition,
         markers: markers,
-        onCameraMove: (pos) => clusteringHelper.onCameraMove(pos, forceUpdate: false),
+        myLocationEnabled: true,
+        onCameraMove: (pos) =>
+            clusteringHelper.onCameraMove(pos, forceUpdate: false),
         onCameraIdle: clusteringHelper.onMapIdle,
       ),
     );
+  }
+
+  void _search() {
+    switch (_type) {
+      case LocationType.all:
+        clusteringHelper.whereClause = '';
+        break;
+      case LocationType.superchargers:
+        clusteringHelper.whereClause =
+            "WHERE ${TeslaLocations.dbType} LIKE :id AND ${TeslaLocations.dbOpen} " +
+                (_open ? '= 0' : '<> 0');
+        clusteringHelper.variables = [Variable.withString('%supercharger%')];
+        break;
+      case LocationType.destination:
+        clusteringHelper.whereClause =
+            "WHERE ${TeslaLocations.dbType} LIKE :id AND ${TeslaLocations.dbOpen} " +
+                (_open ? '= 0' : '<> 0');
+        clusteringHelper.variables = [Variable.withString('%destination%')];
+        break;
+      default:
+    }
+    clusteringHelper.updateMap();
   }
 }
 
