@@ -1,6 +1,7 @@
 import 'package:clustering_google_maps/src/aggregated_points.dart';
 import 'package:clustering_google_maps/src/lat_lang_geohash.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart' show LatLngBounds;
+import 'package:google_maps_flutter/google_maps_flutter.dart'
+    show LatLng, LatLngBounds;
 import 'package:meta/meta.dart';
 import 'package:moor/moor.dart';
 
@@ -9,7 +10,6 @@ class DBHelper {
     @required GeneratedDatabase database,
     @required String dbTable,
     @required String dbLatColumn,
-    @required String dbId,
     @required String dbLongColumn,
     @required String dbGeohashColumn,
     @required int level,
@@ -35,7 +35,7 @@ class DBHelper {
           : "$whereClause AND $boundingBoxClause";
 
       final query =
-          'SELECT COUNT(*) as n_marker, AVG($dbLatColumn) as lat, AVG($dbLongColumn) as long, $dbId '
+          'SELECT COUNT(*) as n_marker, AVG($dbLatColumn) as lat, AVG($dbLongColumn) as long '
           'FROM $dbTable $whereClause GROUP BY substr($dbGeohashColumn,1,$level);';
       print(query);
       var result = await database.customSelect(query, variables: variables);
@@ -44,8 +44,7 @@ class DBHelper {
 
       for (var item in result) {
         print(item);
-        var p = new AggregatedPoints.fromMap(
-            item.data, dbLatColumn, dbLongColumn, dbId);
+        var p = new AggregatedPoints.fromMap(item.data);
         aggregatedPoints.add(p);
       }
       print("--------- COMPLETE QUERY AGGREGATION");
@@ -61,6 +60,8 @@ class DBHelper {
     @required GeneratedDatabase database,
     @required String dbTable,
     @required String dbId,
+    @required String dbTitleColumn,
+    @required String dbSnippetColumn,
     @required String dbLatColumn,
     @required String dbLongColumn,
     String whereClause = "",
@@ -68,7 +69,7 @@ class DBHelper {
   }) async {
     try {
       var result = await database.customSelect(
-        'SELECT $dbLatColumn as lat, $dbLongColumn as long, $dbId '
+        'SELECT $dbLatColumn as lat, $dbLongColumn as long, $dbId, $dbTitleColumn as title, $dbSnippetColumn as snippet '
         'FROM $dbTable $whereClause;',
         variables: variables,
       );
@@ -82,6 +83,38 @@ class DBHelper {
     } catch (e) {
       print(e.toString());
       return List<LatLngAndGeohash>();
+    }
+  }
+
+  static Future<LatLngAndGeohash> getPoint({
+    @required GeneratedDatabase database,
+    @required LatLng location,
+    @required String dbTable,
+    @required String dbId,
+    @required String dbTitleColumn,
+    @required String dbSnippetColumn,
+    @required String dbLatColumn,
+    @required String dbLongColumn,
+  }) async {
+    try {
+      var result = await database.customSelect(
+        'SELECT $dbLatColumn as lat, $dbLongColumn as long, $dbId, $dbTitleColumn as title, $dbSnippetColumn as snippet '
+        'FROM $dbTable WHERE lat = :lat AND long = :long;',
+        variables: [
+          Variable.withReal(location.latitude),
+          Variable.withReal(location.longitude),
+        ],
+      );
+      List<LatLngAndGeohash> points = new List();
+      for (var item in result) {
+        var p = new LatLngAndGeohash.fromMap(item.data);
+        points.add(p);
+      }
+      print("--------- COMPLETE QUERY");
+      return points?.first;
+    } catch (e) {
+      print(e.toString());
+      return null;
     }
   }
 
