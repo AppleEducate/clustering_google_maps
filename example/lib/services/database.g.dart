@@ -1628,8 +1628,7 @@ class $TeslaLocationsTable extends TeslaLocations
 }
 
 abstract class _$DatabaseService extends GeneratedDatabase {
-  _$DatabaseService(QueryExecutor e)
-      : super(const SqlTypeSystem.withDefaults(), e);
+  _$DatabaseService(QueryExecutor e) : super(SqlTypeSystem.withDefaults(), e);
   $TeslaLocationsTable _teslaLocations;
   $TeslaLocationsTable get teslaLocations =>
       _teslaLocations ??= $TeslaLocationsTable(this);
