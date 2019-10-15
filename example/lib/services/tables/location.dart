@@ -7,7 +7,6 @@ class TeslaLocations extends Table {
   static final dbLat = "latitude";
   static final dbLong = "longitude";
   static final dbGeohash = "geohash";
-  static final dbOpen = "open_soon";
   static final dbTitle = "title";
   static final dbSnippet = "type";
 
